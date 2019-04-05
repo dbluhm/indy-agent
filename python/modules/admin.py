@@ -27,8 +27,6 @@ class Admin(Module):
         return await self.router.route(msg)
 
     async def state_request(self, _) -> Message:
-        print("Processing state_request")
-
         if self.agent.initialized:
             invitations = await get_wallet_records(self.agent.wallet_handle, "invitations")
 

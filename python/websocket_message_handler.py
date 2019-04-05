@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp
 from aiohttp import web
+import json
 
 class WebSocketMessageHandler(object):
     def __init__(self, inbound_queue, outbound_queue):
@@ -33,7 +34,7 @@ class WebSocketMessageHandler(object):
                 if websocket_message.data == 'close':
                     await self.ws.close()
                 else:
-                    print('Received "{}"'.format(websocket_message.data))
+                    print('UI Sent: {}'.format(json.dumps(json.loads(websocket_message.data), indent=4)))
                     await self.recv_q.put(websocket_message.data)
             elif websocket_message.type == aiohttp.WSMsgType.ERROR:
                 print('ws connection closed with exception %s' %
@@ -44,5 +45,5 @@ class WebSocketMessageHandler(object):
     async def _websocket_send(self):
         while True:
             msg_to_send = await self.send_q.get()
-            print('Sending "{}"'.format(msg_to_send))
+            print('Reference Agent Sent: {}'.format(json.dumps(json.loads(msg_to_send), indent=4)))
             await self.ws.send_str(msg_to_send)

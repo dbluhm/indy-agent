@@ -2,6 +2,7 @@
 
 from aiohttp import web
 import asyncio
+import json
 
 class PostDuplexMessageHandler():
     def __init__(self, in_q, out_q):
@@ -16,10 +17,13 @@ class PostDuplexMessageHandler():
             'Access-Control-Allow-Headers': 'Content-Type'
         }
         return web.Response(headers=headers)
+
     async def handle_message(self, request):
         """ Put to message queue and wait for outbound queue to populate
         """
         msg = await request.read()
+        print("Agent Received: {}".format(json.dumps(json.loads(msg.decode('utf-8')), indent=4, sort_keys=False)))
         await self.in_q.put(msg)
-        headers = {'Access-Control-Allow-Origin': '*'}
-        return web.Response(headers=headers, text=(await self.out_q.get()))
+        out_msg = await self.out_q.get()
+        print("Sending to UI: {}".format(json.dumps(json.loads(out_msg), indent=4, sort_keys=False)))
+        return web.Response(text=(await self.out_q.get()))
