@@ -21,6 +21,7 @@ from modules.basicmessage import AdminBasicMessage, BasicMessage
 from modules.trustping import AdminTrustPing, TrustPing
 from post_message_handler import PostMessageHandler
 from websocket_message_handler import WebSocketMessageHandler
+from post_duplex_message_handler import PostDuplexMessageHandler
 from agent import Agent
 from message import Message
 
@@ -50,12 +51,17 @@ if __name__ == "__main__":
         AGENT.message_queue,
         AGENT.outbound_admin_message_queue
     )
+    POST_DUPLEX_HANDLER = PostDuplexMessageHandler(
+        AGENT.message_queue,
+        AGENT.outbound_admin_message_queue
+    )
 
     ROUTES = [
         web.get('/', root),
         web.get('/ws', WEBSOCKET_MESSAGE_HANDLER.ws_handler),
         web.static('/res', 'view/res'),
         web.post('/indy', POST_MESSAGE_HANDLER.handle_message),
+        web.post('/ui', POST_DUPLEX_HANDLER.handle_message)
     ]
 
     WEBAPP['agent'] = AGENT
