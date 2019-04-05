@@ -61,7 +61,8 @@ if __name__ == "__main__":
         web.get('/ws', WEBSOCKET_MESSAGE_HANDLER.ws_handler),
         web.static('/res', 'view/res'),
         web.post('/indy', POST_MESSAGE_HANDLER.handle_message),
-        web.post('/ui', POST_DUPLEX_HANDLER.handle_message)
+        web.post('/ui', POST_DUPLEX_HANDLER.handle_message),
+        web.options('/ui', POST_DUPLEX_HANDLER.handle_options)
     ]
 
     WEBAPP['agent'] = AGENT

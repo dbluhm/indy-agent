@@ -8,6 +8,14 @@ class PostDuplexMessageHandler():
         self.in_q = in_q
         self.out_q = out_q
 
+    async def handle_options(self, request):
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Allow': 'OPTIONS, POST',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        }
+        return web.Response(headers=headers)
     async def handle_message(self, request):
         """ Put to message queue and wait for outbound queue to populate
         """
