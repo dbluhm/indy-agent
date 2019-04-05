@@ -13,4 +13,5 @@ class PostDuplexMessageHandler():
         """
         msg = await request.read()
         await self.in_q.put(msg)
-        return web.Response(text=(await self.out_q.get()))
+        headers = {'access-control-allow-origin': '*'}
+        return web.Response(headers=headers, text=(await self.out_q.get()))
