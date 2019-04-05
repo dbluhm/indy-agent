@@ -11,9 +11,6 @@ class PostDuplexMessageHandler():
     async def handle_message(self, request):
         """ Put to message queue and wait for outbound queue to populate
         """
-        if not request.app['agent'].initialized:
-            raise web.HTTPUnauthorized()
-
         msg = await request.read()
         await self.in_q.put(msg)
         return web.Response(text=(await self.out_q.get()))
