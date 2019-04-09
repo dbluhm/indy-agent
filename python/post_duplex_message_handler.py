@@ -26,4 +26,10 @@ class PostDuplexMessageHandler():
         await self.in_q.put(msg)
         out_msg = await self.out_q.get()
         print("Sending to UI: {}".format(json.dumps(json.loads(out_msg), indent=4, sort_keys=False)))
-        return web.Response(text=out_msg)
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Allow': 'OPTIONS, POST',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
+        }
+        return web.Response(text=out_msg, headers=headers)
