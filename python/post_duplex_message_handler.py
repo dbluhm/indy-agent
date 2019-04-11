@@ -1,8 +1,9 @@
 """ Message receiver handlers. """
 
-from aiohttp import web
-import asyncio
 import json
+import socket
+
+from aiohttp import web
 
 class PostDuplexMessageHandler():
     def __init__(self, in_q, out_q):
@@ -21,6 +22,17 @@ class PostDuplexMessageHandler():
     async def handle_message(self, request):
         """ Put to message queue and wait for outbound queue to populate
         """
+        agent = request.app['agent']
+        if not agent.endpoint:
+
+            local_ip = socket.gethostbyname(socket.gethostname())
+            agent.endpoint = request.url.scheme + '://' + local_ip
+            if request.url.port is not None:
+                agent.endpoint += ':' + str(request.url.port) + '/indy'
+            else:
+                agent.endpoint += '/indy'
+
+
         msg = await request.read()
         print("Agent Received: {}".format(json.dumps(json.loads(msg.decode('utf-8')), indent=4, sort_keys=False)))
         await self.in_q.put(msg)
