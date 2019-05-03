@@ -1,0 +1,61 @@
+@startuml
+title POST with return route "all"
+skinparam monochrome true
+
+participant Listener as L
+participant "indy-agent" as IA
+participant Transport as T
+participant "Outbound Mail Clerk" as OC
+participant Agent as A
+participant Module as M
+participant Handler as H
+
+== Setup ==
+
+IA -> OC**: create
+IA -> T**: create(mail_clerk)
+IA -> L**: create(transport)
+IA -> L: Start
+IA -> A**: create(transport)
+A -> M**: register_module()
+M -> H**: register_handler()
+A -> T: set_message_handler()
+[-> A: Wallet Setup
+activate A
+A -> T: set_wallet_handle()
+deactivate A
+
+== Incoming Message ==
+
+[-> L: POST msg
+activate L
+L -> T++: should_keep_alive(msg)
+return yes
+L -> T++: handle_and_return(msg)
+T -> T: unpack(msg)
+T -> T: ~transport processing
+T -> A++: handle(msg)
+A -> M++: route_msg_to_module(msg)
+M -> H++: route(msg)
+H -> H: processing
+H -> T++: send_message(new_msg, for_id)
+T -> T: Add ~transport details
+T -> T: pack(new_msg)
+T -> OC++: queue_message(packed_new_msg, for_id)
+return
+return
+return
+return
+return
+T -> OC++: get_msg_nowait(from_id)
+note over T: packed_new_msg may be None
+return packed_new_msg
+return packed_new_msg
+alt new_msg is not None
+    [<-- L: 200: packed_new_msg
+else
+    [<-- L: 200
+end
+deactivate L
+
+@enduml

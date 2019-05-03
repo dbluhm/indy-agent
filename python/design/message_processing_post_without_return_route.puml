@@ -1,0 +1,80 @@
+@startuml
+title POST with return route "none"
+skinparam monochrome true
+
+participant Listener as L
+participant "indy-agent" as IA
+participant Dispatcher as D
+participant "Outbound Mail Clerk" as OC
+participant Transport as T
+participant Agent as A
+participant Module as M
+participant Handler as H
+
+== Setup ==
+
+IA -> OC**: create
+IA -> T**: create(mail_clerk)
+IA -> L**: create(transport)
+IA -> L: Start
+IA -> A**: create(transport)
+A -> M**: register_module()
+M -> H**: register_handler()
+A -> T: set_message_handler()
+[-> A: Wallet Setup
+activate A
+A -> T: set_wallet_handle()
+deactivate A
+
+== Incoming Message ==
+
+[-> L: POST msg
+activate L
+L -> T++: should_keep_alive(msg)
+return no
+L -> T++: asyncio.ensure_future(handle(msg))
+[<-- L: 202: Accepted
+deactivate L
+
+ref over T
+    unpack(msg)
+    if ~transport
+        process ~transport
+        if has_dispatcher(queue_id)
+            cancel_dispatcher(queue_id)
+        fi
+        if endpoint available
+            register default dispatcher
+        fi
+    fi
+end
+
+T -> A++: handle(msg)
+A -> M++: route_msg_to_module(msg)
+M -> H++: route(msg)
+H -> H: handling
+H -> T++: send_message(new_msg, for_id)
+T -> T: Add ~transport details
+T -> T: pack(new_msg)
+T -> OC++: queue_message(packed_new_msg, for_id)
+return
+return
+return
+return
+return
+deactivate T
+note over D
+    The dispatcher is already "running" by this point but it
+    is difficult to depcit that here.
+end note
+alt default dispatcher
+    T -> D**: asyncio.ensure_future(dispatcher(queue))
+    activate D
+    [<-- D: POST packed_new_msg from queue
+    deactivate D
+else no dispatcher
+    note over OC
+        Message held until retrieved.
+    end note
+end
+@enduml

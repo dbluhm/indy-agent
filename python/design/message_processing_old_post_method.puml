@@ -1,0 +1,33 @@
+@startuml
+title Old POST method wihtout return route
+skinparam monochrome true
+hide footbox
+
+participant Listener as L
+participant "Message Queue" as Q
+participant Agent as A
+participant Module as M
+participant Handler as H
+
+L -> L: Start
+A -> A++: Start
+A -> A: enter message processing loop
+A -> Q: await inbound_queue.get()
+deactivate A
+[-> L: POST msg
+activate L
+L -> Q: queue.put(msg)
+[<-- L: 202: Accepted
+deactivate L
+Q --> A++: msg
+A -> A: unpack(msg)
+A -> M++: route_msg_to_module(msg)
+deactivate A
+M -> H++: route(msg)
+deactivate M
+H -> H: processing
+[<-- H: POST new_msg
+deactivate H
+
+
+@enduml
