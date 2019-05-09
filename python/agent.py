@@ -11,7 +11,6 @@ import aiohttp
 from indy import wallet, did, error, crypto, pairwise
 
 import indy_sdk_utils as utils
-from serializer import json_serializer as Serializer
 from python_agent_utils.messages.message import Message
 from router.family_router import FamilyRouter
 
@@ -38,6 +37,7 @@ class Agent:
         self.admin_key = None
         self.agent_admin_key = None
         self.outbound_admin_message_queue = asyncio.Queue()
+        self.mail_clerk = 
 
     def register_module(self, module):
         self.modules[module.FAMILY] = module(self)
@@ -51,27 +51,9 @@ class Agent:
         """
         while True:
             try:
-                wire_msg_bytes = await self.message_queue.get()
-
-                # Try to unpack message assuming it's not encrypted
-                msg = ""
-                try:
-                    msg = Serializer.unpack(wire_msg_bytes)
-                except Exception as e:
-                    print("Message encrypted, attempting to unpack...")
-
-                # TODO: More graceful checking here
-                # (This is an artifact of the provisional wire format and connection protocol)
-                if not isinstance(msg, Message) or "@type" not in msg:
-                    # Message IS encrypted so unpack it
-                    try:
-                        msg = await self.unpack_agent_message(wire_msg_bytes)
-                    except Exception as e:
-                        print('Failed to unpack message: {}\n\nError: {}'.format(wire_msg_bytes, e))
-                        traceback.print_exc()
-                        continue  # handle next message in loop
-
+                msg = await self.message_queue.get()
                 await self.route_message_to_module(msg)
+
             except Exception as e:
                 print("\n\n--- Message Processing failed --- \n\n")
                 traceback.print_exc()
@@ -167,68 +149,18 @@ class Agent:
         fieldjson = data_bytes[8:]
         return json.loads(fieldjson), sig_verified
 
-    async def unpack_agent_message(self, wire_msg_bytes):
-        if isinstance(wire_msg_bytes, str):
-            wire_msg_bytes = bytes(wire_msg_bytes, 'utf-8')
-        unpacked = json.loads(
-            await crypto.unpack_message(
-                self.wallet_handle,
-                wire_msg_bytes
-            )
-        )
-
-        from_key = None
-        from_did = None
-        if 'sender_verkey' in unpacked:
-            from_key = unpacked['sender_verkey']
-            from_did = await utils.did_for_key(self.wallet_handle, unpacked['sender_verkey'])
-
-        to_key = unpacked['recipient_verkey']
-        to_did = await utils.did_for_key(self.wallet_handle, unpacked['recipient_verkey'])
-
-        msg = Serializer.unpack(unpacked['message'])
-
-        msg.context = {
-            'from_did': from_did,  # Could be None
-            'to_did': to_did,  # Could be None
-            'from_key': from_key,  # Could be None
-            'to_key': to_key
-        }
-        return msg
 
     async def send_message_to_agent(self, to_did, msg: Message):
         print("Sending:", msg)
         their_did = to_did
 
-        pairwise_info = json.loads(await pairwise.get_pairwise(self.wallet_handle, their_did))
-        pairwise_meta = json.loads(pairwise_info['metadata'])
-
-        my_did = pairwise_info['my_did']
-        their_endpoint = pairwise_meta['their_endpoint']
-        their_vk = pairwise_meta['their_vk']
-
-        my_vk = await did.key_for_local_did(self.wallet_handle, my_did)
 
         await self.send_message_to_endpoint_and_key(their_vk, their_endpoint, msg, my_vk)
 
     # used directly when sending to an endpoint without a known did
     async def send_message_to_endpoint_and_key(self, their_ver_key, their_endpoint, msg, my_ver_key=None):
         # If my_ver_key is omitted, anoncrypt is used inside pack.
-        wire_message = await crypto.pack_message(
-            self.wallet_handle,
-            Serializer.pack(msg),
-            [their_ver_key],
-            my_ver_key
-        )
-
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                'content-type': 'application/ssi-agent-wire'
-            }
-            async with session.post(their_endpoint, data=wire_message, headers=headers) as resp:
-                if resp.status != 202:
-                    print(resp.status)
-                    print(await resp.text())
+        pass
 
     async def setup_admin(self, admin_key):
         self.admin_key = admin_key
