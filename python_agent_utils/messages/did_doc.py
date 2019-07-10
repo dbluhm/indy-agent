@@ -2,8 +2,8 @@ from .message import Message
 
 
 class DIDDoc:
-    DID = 'did'
-    DID_DOC = 'did_doc'
+    DID = 'DID'
+    DID_DOC = 'DIDDoc'
 
     @staticmethod
     def validate(did_doc):

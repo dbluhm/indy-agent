@@ -83,8 +83,8 @@ class Connection(Message):
                 '@id': str(uuid.uuid4()),
                 'label': label,
                 'connection': {
-                    'did': my_did,
-                    'did_doc': {
+                    'DID': my_did,
+                    'DIDDoc': {
                         "@context": "https://w3id.org/did/v1",
                         "id": my_did,
                         "publicKey": [{
@@ -133,8 +133,8 @@ class Connection(Message):
                 '@id': str(uuid.uuid4()),
                 '~thread': {Message.THREAD_ID: req_id, Message.SENDER_ORDER: 0},
                 'connection': {
-                    'did': my_did,
-                    'did_doc': {
+                    'DID': my_did,
+                    'DIDDoc': {
                         "@context": "https://w3id.org/did/v1",
                         "id": my_did,
                         "publicKey": [{

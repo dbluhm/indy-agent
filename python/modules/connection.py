@@ -237,8 +237,8 @@ class AdminConnection(Module):
             '@type': Connection.REQUEST,
             'label': my_label,
             'connection': {
-                'did': my_did,
-                'did_doc': {
+                'DID': my_did,
+                'DIDDoc': {
                     "@context": "https://w3id.org/did/v1",
                     "id": my_did,
                     "publicKey": [{
@@ -308,8 +308,8 @@ class AdminConnection(Module):
             '@type': Connection.RESPONSE,
             '~thread': {Message.THREAD_ID: pairwise_meta['req_id'], Message.SENDER_ORDER: 0},
             'connection': {
-                'did': my_did,
-                'did_doc': {
+                'DID': my_did,
+                'DIDDoc': {
                     "@context": "https://w3id.org/did/v1",
                     "id": my_did,
                     "publicKey": [{
